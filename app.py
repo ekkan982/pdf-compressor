@@ -1,61 +1,60 @@
-from flask import Flask, request, send_file, render_template
 import os
+import multiprocessing
 from pdf2image import convert_from_path
 from PIL import Image
 import img2pdf
 
-app = Flask(__name__)
-UPLOAD_FOLDER = 'uploads'
-COMPRESSED_FOLDER = 'compressed'
+# Function to compress image
+def compress_image(args):
+    img, quality, temp_path = args
+    img = img.convert("RGB")
+    img.save(temp_path, "JPEG", quality=quality)
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(COMPRESSED_FOLDER, exist_ok=True)
+# Function to compress PDF
+def compress_pdf(input_pdf, output_pdf, target_size=200 * 1024, dpi=100):
+    # Convert PDF pages to images (Lower DPI for faster processing)
+    images = convert_from_path(input_pdf, dpi=dpi)
 
-TARGET_SIZE = 200 * 1024  # 200KB
+    # Initial compression quality
+    min_quality, max_quality = 5, 95
+    best_quality = min_quality
+    best_pdf_path = None
 
-def compress_pdf(input_path, output_path):
-    images = convert_from_path(input_path, dpi=150)  # Convert PDF pages to images
-    temp_images = []
+    while min_quality <= max_quality:
+        mid_quality = (min_quality + max_quality) // 2
+        temp_images = []
+        temp_paths = [f"temp_{i}.jpg" for i in range(len(images))]
 
-    quality = 85  # Initial quality
-    step = 5  # Reduce quality in each loop
-    min_quality = 10  # Minimum quality limit
+        # Parallel Processing for Faster Image Compression
+        with multiprocessing.Pool() as pool:
+            pool.map(compress_image, [(img, mid_quality, temp_paths[i]) for i, img in enumerate(images)])
 
-    while quality >= min_quality:
-        temp_images.clear()
+        # Convert images back to PDF
+        with open(output_pdf, "wb") as f:
+            f.write(img2pdf.convert(temp_paths))
 
-        for img in images:
-            temp_img_path = f"{UPLOAD_FOLDER}/temp_{quality}.jpg"
-            img.save(temp_img_path, "JPEG", quality=quality)
-            temp_images.append(temp_img_path)
+        # Check file size
+        compressed_size = os.path.getsize(output_pdf)
 
-        with open(output_path, "wb") as f:
-            f.write(img2pdf.convert(temp_images))
-
-        if os.path.getsize(output_path) <= TARGET_SIZE:
+        # If size is within 195KB-205KB, accept it
+        if 195 * 1024 <= compressed_size <= 205 * 1024:
+            best_quality = mid_quality
+            best_pdf_path = output_pdf
             break
 
-        quality -= step
+        # Adjust compression quality
+        if compressed_size > target_size:
+            max_quality = mid_quality - 1  # Reduce quality for more compression
+        else:
+            min_quality = mid_quality + 1  # Increase quality for less compression
 
-    for temp_img in temp_images:
-        os.remove(temp_img)
+        # Cleanup temp images
+        for temp_file in temp_paths:
+            os.remove(temp_file)
 
-@app.route("/", methods=["GET", "POST"])
-def upload_file():
-    if request.method == "POST":
-        if "pdf" not in request.files:
-            return "No file uploaded", 400
+    return best_pdf_path if best_pdf_path else output_pdf
 
-        pdf_file = request.files["pdf"]
-        if pdf_file.filename == "":
-            return "No selected file", 400
-
-        input_path = os.path.join(UPLOAD_FOLDER, pdf_file.filename)
-        output_path = os.path.join(COMPRESSED_FOLDER, "compressed_" + pdf_file.filename)
-        pdf_file.save(input_path)
-
-        compress_pdf(input_path, output_path)
-
-        return send_file(output_path, as_attachment=True)
-
-    return render_template("index.html")
+# Example Usage
+input_pdf = "input.pdf"
+output_pdf = "compressed.pdf"
+compress_pdf(input_pdf, output_pdf)

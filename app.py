@@ -59,6 +59,3 @@ def upload_file():
         return send_file(output_path, as_attachment=True)
 
     return render_template("index.html")
-
-if __name__ == "__main__":
-    (debug=True)

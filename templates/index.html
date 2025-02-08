@@ -3,8 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="google-site-verification" content="0TuzFt2e4EVFuS1mpXoH4lak1s_3via4Ka7f2XAYMYk" />
-    <title>PDF Compressor</title>
+    
+    <!-- ✅ Google Search Console Verification Meta Tag -->
+    <meta name="google-site-verification" content="your_verification_code" />
+
+    <title>PDF Compressor - Reduce PDF Size to 200KB</title>
+    <meta name="description" content="Compress your PDF files to exactly 200KB for free. No signup required. Fast and secure PDF size reducer online.">
+    <meta name="keywords" content="PDF compressor, free PDF size reducer, online PDF compression, reduce PDF to 200KB">
+    <meta name="robots" content="index, follow">
+    
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -32,11 +39,11 @@
 
         .btn {
             display: inline-block;
-            width: 150px;  /* ✅ Same Button Width */
+            width: 150px;
             padding: 10px;
             font-size: 16px;
             color: white;
-            background-color: #007BFF; /* ✅ Blue Color */
+            background-color: #007BFF;
             border: none;
             border-radius: 5px;
             cursor: pointer;
@@ -45,7 +52,7 @@
         }
 
         .btn:hover {
-            background-color: #0056b3; /* ✅ Darker Blue on Hover */
+            background-color: #0056b3;
         }
 
         .footer-text {
@@ -62,13 +69,41 @@
     <div class="container">
         <input type="file" id="fileInput">
         <br>
-        <button class="btn">Upload PDF</button>
-        <button class="btn">Download PDF</button>
-        
+        <button class="btn" id="uploadBtn">Upload PDF</button>
+        <button class="btn" id="downloadBtn">Download PDF</button>
+        <p id="status"></p>
+
         <p class="footer-text">
             🚀 Fast & Free PDF Compressor | No Signup Required  
         </p>
     </div>
+
+    <script>
+        document.getElementById("uploadBtn").addEventListener("click", function() {
+            let fileInput = document.getElementById("fileInput").files[0];
+            if (!fileInput) {
+                document.getElementById("status").innerText = "⚠️ Please select a file!";
+                return;
+            }
+
+            let formData = new FormData();
+            formData.append("file", fileInput);
+
+            fetch("/upload", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById("status").innerText = "✅ " + data;
+            })
+            .catch(error => console.error("Error:", error));
+        });
+
+        document.getElementById("downloadBtn").addEventListener("click", function() {
+            window.location.href = "/download";
+        });
+    </script>
 
 </body>
 </html>

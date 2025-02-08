@@ -2,57 +2,73 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-   <meta name="google-site-verification" content="0TuzFt2e4EVFuS1mpXoH4lak1s_3via4Ka7f2XAYMYk" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-site-verification" content="0TuzFt2e4EVFuS1mpXoH4lak1s_3via4Ka7f2XAYMYk" />
     <title>PDF Compressor</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin: 50px; }
-        input[type="file"] { margin: 20px; }
-        button { padding: 10px 20px; font-size: 16px; }
-        #message { margin-top: 20px; font-weight: bold; }
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        h1 {
+            color: #333;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        input[type="file"] {
+            margin: 15px 0;
+            padding: 10px;
+        }
+
+        .btn {
+            display: inline-block;
+            width: 150px;  /* ✅ Same Button Width */
+            padding: 10px;
+            font-size: 16px;
+            color: white;
+            background-color: #007BFF; /* ✅ Blue Color */
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            transition: background 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #0056b3; /* ✅ Darker Blue on Hover */
+        }
+
+        .footer-text {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #555;
+        }
     </style>
 </head>
 <body>
-    <h2>PDF Compressor (200KB)</h2>
-    <form id="uploadForm" enctype="multipart/form-data">
-        <input type="file" id="pdfFile" name="pdf" accept="application/pdf" required>
-        <button type="submit">Compress & Download</button>
-    </form>
-    <p id="message"></p>
 
-    <script>
-        document.getElementById("uploadForm").addEventListener("submit", function(event) {
-            event.preventDefault();
+    <h1>Compress Your PDF to 200KB</h1>
 
-            let formData = new FormData();
-            let pdfFile = document.getElementById("pdfFile").files[0];
-            if (!pdfFile) {
-                document.getElementById("message").innerText = "Please select a PDF file!";
-                return;
-            }
+    <div class="container">
+        <input type="file" id="fileInput">
+        <br>
+        <button class="btn">Upload PDF</button>
+        <button class="btn">Download PDF</button>
+        
+        <p class="footer-text">
+            🚀 Fast & Free PDF Compressor | No Signup Required  
+        </p>
+    </div>
 
-            formData.append("pdf", pdfFile);
-            document.getElementById("message").innerText = "Compressing... Please wait.";
-
-            fetch("/", {
-                method: "POST",
-                body: formData
-            })
-            .then(response => response.blob())
-            .then(blob => {
-                let url = window.URL.createObjectURL(blob);
-                let a = document.createElement("a");
-                a.href = url;
-                a.download = "compressed_" + pdfFile.name;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                document.getElementById("message").innerText = "Download Complete!";
-            })
-            .catch(error => {
-                console.error(error);
-                document.getElementById("message").innerText = "Error compressing PDF!";
-            });
-        });
-    </script>
 </body>
 </html>
